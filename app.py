@@ -47,3 +47,16 @@ if prompt := st.chat_input("Your answer:"):
         )
     except Exception as exc:
         st.error(f"Unable to get a response: {exc}")
+
+
+# Initialize session state variables
+if "setup_complete" not in st.session_state:
+    st.session_state.setup_complete = False
+if "user_message_count" not in st.session_state:
+    st.session_state.user_message_count = 0
+if "feedback_shown" not in st.session_state:
+    st.session_state.feedback_shown = False
+if "chat_complete" not in st.session_state:
+    st.session_state.chat_complete = False
+if "messages" not in st.session_state:
+    st.session_state.messages = []

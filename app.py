@@ -1,62 +1,41 @@
+# 1. Imports and page setup: load the libraries used by the chat app.
 from openai import OpenAI
 import streamlit as st
 
-# Setting up the Streamlit page configuration
+# Configure the Streamlit page and show the chatbot heading.
 st.set_page_config(page_title="StreamlitChatMessageHistory", page_icon="💬")
 st.title("Chatbot")
 
-st.title("Chatbot")
 
+# 2. Gemini client configuration: connect through Google's OpenAI-compatible API.
 client = OpenAI(
     api_key=st.secrets["Google_Api_Key"],
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
-if "googlemodel" not in st.session_state:
-    st.session_state.googlemodel = "gemini-3.5-flash-lite"
+# model 
+MODEL = "gemini-flash-latest"
 
+# 1. Keep the conversation across reruns
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages=[]
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# hanlde new history 
+for m in st.session_state.messages:
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
+#handle new meassge :
 
-if prompt := st.chat_input("Your answer:"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+if prompt := st.chat_input("Your response"):
+    st.session_state.messages.append({"role":"user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-
-    try:
-        with st.chat_message("assistant"):
-            response = client.chat.completions.create(
-                model=st.session_state.googlemodel,
-                messages=[
-                    {
-                        "role": message["role"],
-                        "content": message["content"],
-                    }
-                    for message in st.session_state.messages
-                ],
-            )
-            answer = response.choices[0].message.content
-            st.markdown(answer)
-
-        st.session_state.messages.append(
-            {"role": "assistant", "content": answer}
+    with st.chat_message("assistant"):
+        stream = client.chat.completions.create(
+            model=MODEL,
+            messages=st.session_state.messages,
+            stream=True,
         )
-    except Exception as exc:
-        st.error(f"Unable to get a response: {exc}")
+        response = st.write_stream(stream)
 
-
-# Initialize session state variables
-if "setup_complete" not in st.session_state:
-    st.session_state.setup_complete = False
-if "user_message_count" not in st.session_state:
-    st.session_state.user_message_count = 0
-if "feedback_shown" not in st.session_state:
-    st.session_state.feedback_shown = False
-if "chat_complete" not in st.session_state:
-    st.session_state.chat_complete = False
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages.append({"role": "assistant", "content": response})
